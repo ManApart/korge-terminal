@@ -5,26 +5,18 @@ import com.soywiz.korge.input.keys
 import com.soywiz.korge.ui.*
 import com.soywiz.korge.view.alignBottomToBottomOf
 import com.soywiz.korge.view.alignBottomToTopOf
-import com.soywiz.korge.view.positionY
 import com.soywiz.korim.color.Colors
 import com.soywiz.korim.text.TextAlignment
 
 const val WIDTH = 512.0
 const val HEIGHT = 512.0
-const val LINE_HEIGHT = 15.0
+const val MAX_LINES = 26
 
 @KorgeExperimental
-suspend fun main() = Korge(width = WIDTH.toInt(), height = HEIGHT.toInt(), bgcolor = Colors["#2b2b2b"]) {
+suspend fun main() = Korge(title = "KorGe Terminal", width = WIDTH.toInt(), height = HEIGHT.toInt(), bgcolor = Colors["#2b2b2b"]) {
     val completer = StringCompleter("apple", "bob", "candy")
     val processor = ExampleProcessor()
-//    val history = (0..20).map { "test $it" }.toMutableList()
     lateinit var history: UIText
-
-//    val stack = uiVerticalStack(WIDTH) {
-//        history.forEach {
-//            uiText(it, WIDTH, 20.0)
-//        }
-//    }
 
     val suggestions = uiText("", WIDTH) {
         alignBottomToBottomOf(parent!!)
@@ -35,20 +27,15 @@ suspend fun main() = Korge(width = WIDTH.toInt(), height = HEIGHT.toInt(), bgcol
         focus()
     }
 
-//    uiScrollable(width = WIDTH, height = HEIGHT - 40.0) {
-        val text = (0..60).joinToString("\n") { "test $it" }
-        val offset = -LINE_HEIGHT * text.count { it == '\n' }
-        history = uiText(text, WIDTH, HEIGHT-40) {
-            textAlignment = TextAlignment.TOP_LEFT
-            alignBottomToTopOf(prompt)
-            positionY(offset)
-        }
-//    }
+    val exampleHistory = (0..60).joinToString("\n") { "test $it" }
+    history = uiText(exampleHistory, WIDTH, HEIGHT - 40) {
+        textAlignment = TextAlignment.TOP_LEFT
+        alignBottomToTopOf(prompt)
+    }
 
     keys {
         up(Key.TAB) {
-            val text = prompt.text
-            val parts = text.split(" ")
+            val parts = prompt.text.split(" ")
             val options = completer.complete(parts, parts.last())
             if (options.size == 1) {
                 val nonReplaced = parts.subList(0, parts.size - 1).joinToString(" ")
@@ -56,22 +43,12 @@ suspend fun main() = Korge(width = WIDTH.toInt(), height = HEIGHT.toInt(), bgcol
                 prompt.cursorIndex = prompt.text.length
                 suggestions.text = ""
             } else {
-                suggestions.text = options.joinToString(",")
+                suggestions.text = options.joinToString(", ")
             }
         }
         up(Key.ENTER) {
-            val text = prompt.text
-            history.text += processor.process(text) + "\n"
-            val offset = -LINE_HEIGHT * history.text.count { it == '\n' }
-            history.positionY(offset)
-//            history.height = offset.toDouble()
-//            history.subList(1, history.size).forEachIndexed { i, line ->
-//                history[i] = line
-//            }
-//            history[history.size - 1] = processor.process(text)
-//            (0 until history.size).forEach { i ->
-//                (stack[i] as UIText).text = history[i]
-//            }
+            history.text =
+                (history.text + "\n" + processor.process(prompt.text)).split("\n").takeLast(MAX_LINES).joinToString("\n")
             prompt.text = ""
         }
     }
