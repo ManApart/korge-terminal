@@ -1,3 +1,3 @@
 interface Completer {
-    fun complete(lineIn: String): List<String>
+    fun complete(lineIn: List<String>, lastWord: String): List<String>
 }
