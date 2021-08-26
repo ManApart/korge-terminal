@@ -15,13 +15,18 @@ const val HEIGHT = 512.0
 suspend fun main() = Korge(width = WIDTH.toInt(), height = HEIGHT.toInt(), bgcolor = Colors["#2b2b2b"]) {
     val completer = StringCompleter("apple", "bob", "candy")
     val processor = ExampleProcessor()
+    val history = (0..20).map { "test $it" }.toMutableList()
 
-    lateinit var history: UIText
-    uiScrollable(width = WIDTH, height = HEIGHT - 40.0, config = {
+//    lateinit var history: UIText
+//    uiScrollable(width = WIDTH, height = HEIGHT - 40.0) {
+//        history = uiText("test\nline2\nline3".repeat(10), WIDTH, HEIGHT - 40.0) {
+//            textAlignment = TextAlignment.TOP_LEFT
+//        }
+//    }
 
-    }) {
-        history = uiText("test\nline2\nline3".repeat(10), WIDTH, HEIGHT - 40.0) {
-            textAlignment = TextAlignment.TOP_LEFT
+    val stack = uiVerticalStack(WIDTH) {
+        history.forEach {
+            uiText(it, WIDTH, 20.0)
         }
     }
 
@@ -29,14 +34,14 @@ suspend fun main() = Korge(width = WIDTH.toInt(), height = HEIGHT.toInt(), bgcol
         alignBottomToBottomOf(parent!!)
     }
 
-    val prompt = uiTextInput(">", width = WIDTH) {
+    val prompt = uiTextInput("", width = WIDTH) {
         alignBottomToTopOf(suggestions)
         focus()
     }
 
     keys {
         up(Key.TAB) {
-            val text = prompt.getText()
+            val text = prompt.text
             val parts = text.split(" ")
             val options = completer.complete(parts, parts.last())
             if (options.size == 1) {
@@ -49,17 +54,19 @@ suspend fun main() = Korge(width = WIDTH.toInt(), height = HEIGHT.toInt(), bgcol
             }
         }
         up(Key.ENTER) {
-            val text = prompt.getText()
-            history.text += processor.process(text) + "\n"
-            prompt.text = ">"
+            val text = prompt.text
+//            history.text += processor.process(text) + "\n"
+            history.subList(1, history.size).forEachIndexed { i, line ->
+                history[i] = line
+            }
+            history[history.size - 1] = processor.process(text)
+            (0 until history.size).forEach { i ->
+                (stack[i] as UIText).text = history[i]
+            }
+//            (stack[historyIndex] as UIText).text = processor.process(text)
+//            stack.addChild(uiText( processor.process(text), WIDTH, HEIGHT - 40.0))
+            prompt.text = ""
         }
     }
 
-}
-
-@KorgeExperimental
-private fun UITextInput.getText(): String {
-    return if (text.startsWith(">")) {
-        text.substring(1)
-    } else text
 }
