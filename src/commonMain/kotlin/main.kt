@@ -4,7 +4,6 @@ import com.soywiz.korge.Korge
 import com.soywiz.korge.annotations.KorgeExperimental
 import com.soywiz.korge.input.keys
 import com.soywiz.korge.ui.*
-import com.soywiz.korge.view.Stage
 import com.soywiz.korge.view.alignBottomToBottomOf
 import com.soywiz.korge.view.alignBottomToTopOf
 import com.soywiz.korim.color.Colors
@@ -23,33 +22,24 @@ suspend fun main() = Korge(
     height = HEIGHT.toInt(),
     bgcolor = Colors["#2b2b2b"],
     scaleAnchor = Anchor.TOP_LEFT,
-    scaleMode = ScaleMode.NO_SCALE
+    scaleMode = ScaleMode.SHOW_ALL
 ) {
     val completer = StringCompleter("apple", "bob", "candy")
     val processor = ExampleProcessor()
 
-    var suggestions = buildSuggestions(WIDTH)
+    val suggestions = uiText("", WIDTH) {
+        alignBottomToBottomOf(parent!!)
+    }
 
-    var prompt = buildPrompt("", width, suggestions)
+    val prompt = uiTextInput("", width = WIDTH) {
+        alignBottomToTopOf(suggestions)
+        focus()
+    }
 
     val exampleHistory = (0..60).joinToString("\n") { "test $it" }
-    var history = buildHistory(WIDTH, HEIGHT, exampleHistory, prompt)
-
-    stage.addEventListener(ReshapeEvent::class) { e ->
-        val w = e.width.toDouble()
-        val h = e.height.toDouble()
-        stage.scaledWidth = w
-        stage.scaledHeight = h
-        stage.removeChildren()
-        suggestions = buildSuggestions(width)
-        prompt = buildPrompt(prompt.text, w, suggestions)
-        history = buildHistory(w, h, history.text, prompt)
-//        prompt.scaledWidth = w
-////        prompt.scaledHeight = h
-//        history.scaledWidth = w
-//        history.scaledHeight = h -40
-//        suggestions.scaledWidth = w
-////        suggestions.scaledHeight = h
+    val history = uiText(exampleHistory, WIDTH, HEIGHT - 40) {
+        textAlignment = TextAlignment.TOP_LEFT
+        alignBottomToTopOf(prompt)
     }
 
     keys {
@@ -73,29 +63,4 @@ suspend fun main() = Korge(
         }
     }
 
-}
-
-private fun Stage.buildHistory(
-    width: Double,
-    height: Double,
-    text: String,
-    prompt: UITextInput
-): UIText {
-    return uiText(text, WIDTH, HEIGHT - 40) {
-        textAlignment = TextAlignment.TOP_LEFT
-        alignBottomToTopOf(prompt)
-    }
-}
-
-private fun Stage.buildPrompt(text: String, width: Double, suggestions: UIText): UITextInput {
-    return uiTextInput(text, width) {
-        alignBottomToTopOf(suggestions)
-        focus()
-    }
-}
-
-private fun Stage.buildSuggestions(width: Double): UIText {
-    return uiText("", width) {
-        alignBottomToBottomOf(parent!!)
-    }
 }
