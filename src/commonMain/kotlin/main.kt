@@ -48,7 +48,7 @@ suspend fun main() = Korge(
             val options = completer.complete(parts, parts.last())
             if (options.size == 1) {
                 val nonReplaced = parts.subList(0, parts.size - 1).joinToString(" ")
-                prompt.text = ">$nonReplaced " + options.first() + " "
+                prompt.text = "$nonReplaced " + options.first() + " "
                 prompt.cursorIndex = prompt.text.length
                 suggestions.text = ""
             } else {
